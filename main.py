@@ -1,5 +1,6 @@
 import time
 import socket
+import sys
 import logging
 from dx4000_lcd.state import SystemState
 from dx4000_lcd.collectors import CpuCollector, DiskTempCollector, FanCollector, StorageCollector
@@ -21,14 +22,14 @@ def send(s, cmd):
     logging.debug("SENT: %s", cmd)
 
 def main():
-    logging.info("Starting modular nas_lcd daemon")
+    logging.info("Starting modular nas_lcd daemon with Torrent support")
     state = SystemState()
     collectors = [
         CpuCollector(),
         DiskTempCollector(),
         FanCollector(),
         StorageCollector(),
-        TorrentCollector(),
+        TorrentCollector()
     ]
 
     while True:
@@ -47,16 +48,17 @@ def main():
                     try:
                         c.read(state)
                     except Exception as e:
-                        logging.error("Collector %s: %s", c.__class__.__name__, e)
+                        logging.error(f"Collector {c.__class__.__name__}: {e}")
 
                 screens = build_screens(state)
+                # Rotar pantallas dinámicamente
                 for l1, l2 in screens:
-                    send(s, "widget_set dash hd 1 1 " + l1)
-                    send(s, "widget_set dash hd2 1 2 " + l2)
+                    send(s, f"widget_set dash hd 1 1 {l1}")
+                    send(s, f"widget_set dash hd2 1 2 {l2}")
                     time.sleep(INTERVAL)
 
         except Exception as e:
-            logging.error("LCD error: %s", e)
+            logging.error(f"Main loop error: {e}")
             time.sleep(5)
 
 if __name__ == "__main__":

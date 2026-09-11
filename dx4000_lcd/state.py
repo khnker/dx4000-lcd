@@ -1,11 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional, List
 
-@dataclass
-class DiskState:
-    name: str
-    temp_c: Optional[float] = None
-    health: str = "UNKNOWN"
 
 @dataclass
 class CpuState:
@@ -13,8 +8,65 @@ class CpuState:
     temp_c: Optional[float] = None
     load_1m: float = 0.0
 
+
+@dataclass
+class FanState:
+    rpm: int = 0
+    pwm: Optional[int] = None
+
+
+@dataclass
+class DiskState:
+    name: str = ""
+    temp_c: Optional[float] = None
+    health: str = "UNKNOWN"
+    read_bps: int = 0
+    write_bps: int = 0
+
+
+@dataclass
+class StorageState:
+    total_bytes: int = 0
+    used_bytes: int = 0
+    free_bytes: int = 0
+    mergerfs: bool = False
+
+    @property
+    def used_pct(self) -> float:
+        if self.total_bytes == 0:
+            return 0.0
+        return (self.used_bytes / self.total_bytes) * 100.0
+
+
+@dataclass
+class NetworkState:
+    ip: str = "0.0.0.0"
+    rx_bps: int = 0
+    tx_bps: int = 0
+
+
+@dataclass
+class TorrentState:
+    dl_speed: int = 0
+    ul_speed: int = 0
+    active_torrents: int = 0
+
+
+@dataclass
+class BackupState:
+    status: str = "IDLE"
+    progress: float = 0.0
+    last_ok: str = ""
+    last_error: str = ""
+
+
 @dataclass
 class SystemState:
     cpu: CpuState = field(default_factory=CpuState)
+    fan: FanState = field(default_factory=FanState)
     disks: List[DiskState] = field(default_factory=list)
+    storage: StorageState = field(default_factory=StorageState)
+    network: NetworkState = field(default_factory=NetworkState)
+    torrent: TorrentState = field(default_factory=TorrentState)
+    backup: BackupState = field(default_factory=BackupState)
     status: str = "OK"
