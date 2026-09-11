@@ -23,7 +23,7 @@ def send(s, cmd):
 def main():
     logging.info("Starting modular nas_lcd daemon")
     state = SystemState()
-    scroll = ScrollText()
+    scroll = ScrollText(speed=2)
     collectors = [
         CpuCollector(),
         DiskTempCollector(),
@@ -49,6 +49,9 @@ def main():
                         c.read(state)
                     except Exception as e:
                         logging.error("Collector %s: %s", c.__class__.__name__, e)
+
+                # Actualizar scroll siempre (incluso si no se muestra TORRENT)
+                scroll.update(state.torrent.torrent_name)
 
                 screens = build_screens(state, scroll)
                 for l1, l2 in screens:
