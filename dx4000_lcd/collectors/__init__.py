@@ -54,15 +54,20 @@ class DiskTempCollector:
 
 
 class StorageCollector:
+    def __init__(self, mountpoint="/mnt/media"):
+        self.mountpoint = mountpoint
+
     def read(self, state: SystemState):
         try:
-            total = used = 0
-            for ln in sh("df -P -x tmpfs -x devtmpfs").splitlines()[1:]:
-                c = ln.split()
-                if len(c) >= 4 and c[0].startswith("/dev/sd"):
-                    used += int(c[2]) * 1024
-                    total += int(c[1]) * 1024
-            state.storage.total_bytes = total
-            state.storage.used_bytes = used
+            out = subprocess.run(
+                ["df", "-B1", self.mountpoint],
+                capture_output=True, text=True, timeout=2
+            ).stdout
+            lines = out.strip().splitlines()
+            if len(lines) >= 2:
+                cols = lines[1].split()
+                state.storage.total_bytes = int(cols[1])
+                state.storage.used_bytes = int(cols[2])
+                state.storage.free_bytes = int(cols[3])
         except:
             pass
