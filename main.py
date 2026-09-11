@@ -35,23 +35,21 @@ def main():
         try:
             lcd.connect()
             
-            # Cargar CGRAM (Glyphs)
-            lcd.set_char(0, "16 16 16 16 16 16 16 16")
-            lcd.set_char(1, "24 24 24 24 24 24 24 24")
-            lcd.set_char(2, "28 28 28 28 28 28 28 28")
-            lcd.set_char(3, "30 30 30 30 30 30 30 30")
-            lcd.set_char(4, "4 4 4 4 14 14 31 14")
-            lcd.set_char(5, "10 4 10 0 0 0 0 0")
+            # Subir CGRAM slots una sola vez
+            lcd.set_char(0, "16 16 16 16 16 16 16 16") # BAR1
+            lcd.set_char(1, "24 24 24 24 24 24 24 24") # BAR2
+            lcd.set_char(2, "28 28 28 28 28 28 28 28") # BAR3
+            lcd.set_char(3, "30 30 30 30 30 30 30 30") # BAR4
+            lcd.set_char(4, "4 4 4 4 14 14 31 14")     # THERMO
+            lcd.set_char(5, "10 4 10 0 0 0 0 0")       # FAN
             
             while True:
-                # Recolectar datos
                 for c in collectors:
                     try:
                         c.read(state)
                     except Exception:
                         pass
                 
-                # Evaluar salud / alertas
                 alerts = engine.evaluate(state)
                 top_alert = highest_priority_alert(alerts)
                 
@@ -67,6 +65,8 @@ def main():
                         out = system_screen.render(state)
                     elif name == "network":
                         out = network_screen.render(state)
+                    elif name == "torrent":
+                        out = torrent_screen.render(state)
                     else:
                         out = status_screen.render(state)
                         
@@ -74,7 +74,7 @@ def main():
                 time.sleep(3)
                 manager.next()
                 
-        except Exception as e:
+        except Exception:
             time.sleep(5)
 
 if __name__ == "__main__":

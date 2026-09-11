@@ -1,5 +1,5 @@
 import socket
-from .renderer import lcd_escape, fit_line
+from dx4000_lcd.renderer import lcd_escape
 
 class LCDProc:
     def __init__(self, host="127.0.0.1", port=13666):
@@ -20,18 +20,17 @@ class LCDProc:
         if self.sock:
             self.sock.sendall((cmd + "\n").encode())
 
-    def set_line(self, row: int, text: str):
-        escaped = lcd_escape(fit_line(text))
-        self.send(f"widget_set dash L{row} 1 {row} {{{escaped}}}")
+    def set_char(self, slot: int, rows: str):
+        self.send(f"set_char {slot} {rows}")
 
-    def set_char(self, slot: int, rows: list[int]):
-        row_str = " ".join(map(str, rows))
-        self.send(f"set_char {slot} {row_str}")
+    def update(self, line1: str, line2: str):
+        # Escape spaces for LCDProc protocol
+        self.send(f"widget_set dash L1 1 1 {lcd_escape(line1)}")
+        self.send(f"widget_set dash L2 1 2 {lcd_escape(line2)}")
 
     def close(self):
         if self.sock:
             try:
                 self.sock.close()
-            except Exception:
+            except OSError:
                 pass
-            self.sock = None
