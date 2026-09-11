@@ -4,7 +4,7 @@ import logging
 from dx4000_lcd.state import SystemState
 from dx4000_lcd.collectors import CpuCollector, DiskTempCollector, FanCollector, StorageCollector
 from dx4000_lcd.collectors.torrents import TorrentCollector
-from dx4000_lcd.renderer import build_screens, ScrollText
+from dx4000_lcd.renderer import build_screens
 
 LCD_HOST = "127.0.0.1"
 LCD_PORT = 13666
@@ -53,7 +53,7 @@ def main():
                 # Actualizar scroll siempre (incluso si no se muestra TORRENT)
                 scroll.update(state.torrent.torrent_name)
 
-                screens = build_screens(state, scroll)
+                screens = build_screens(state)
                 for l1, l2 in screens:
                     send(s, "widget_set dash hd 1 1 " + l1)
                     send(s, "widget_set dash hd2 1 2 " + l2)
