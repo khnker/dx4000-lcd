@@ -1,15 +1,13 @@
 import time
+import logging
 from dx4000_lcd.lcdproc import LCDProc
 from dx4000_lcd.screen_manager import ScreenManager
 from dx4000_lcd.health import HealthEngine, highest_priority_alert
-from dx4000_lcd.screens.status import StatusScreen
-from dx4000_lcd.screens.storage import StorageScreen
-from dx4000_lcd.screens.system import SystemScreen
-from dx4000_lcd.screens.network import NetworkScreen
-from dx4000_lcd.screens.torrent import TorrentScreen
-from dx4000_lcd.screens.alert import AlertScreen
 from dx4000_lcd.state import SystemState
 from dx4000_lcd.collectors import CpuCollector, DiskTempCollector, FanCollector, StorageCollector
+from dx4000_lcd.cgram import load_cgram
+
+logging.basicConfig(level=logging.INFO)
 
 def main():
     state = SystemState()
@@ -19,62 +17,34 @@ def main():
         FanCollector(),
         StorageCollector(),
     ]
-    
+
     lcd = LCDProc()
     manager = ScreenManager()
     engine = HealthEngine()
-    
-    status_screen = StatusScreen()
-    storage_screen = StorageScreen()
-    system_screen = SystemScreen()
-    network_screen = NetworkScreen()
-    torrent_screen = TorrentScreen()
-    alert_screen = AlertScreen()
 
     while True:
         try:
             lcd.connect()
-            
-            # Subir CGRAM slots una sola vez
-            lcd.set_char(0, "16 16 16 16 16 16 16 16") # BAR1
-            lcd.set_char(1, "24 24 24 24 24 24 24 24") # BAR2
-            lcd.set_char(2, "28 28 28 28 28 28 28 28") # BAR3
-            lcd.set_char(3, "30 30 30 30 30 30 30 30") # BAR4
-            lcd.set_char(4, "4 4 4 4 14 14 31 14")     # THERMO
-            lcd.set_char(5, "10 4 10 0 0 0 0 0")       # FAN
-            
+            load_cgram(lcd)
+
             while True:
                 for c in collectors:
                     try:
                         c.read(state)
-                    except Exception:
-                        pass
-                
-                alerts = engine.evaluate(state)
-                top_alert = highest_priority_alert(alerts)
-                
-                if top_alert:
-                    out = alert_screen.render(top_alert)
-                else:
-                    name = manager.current_screen_name
-                    if name == "status":
-                        out = status_screen.render(state)
-                    elif name == "storage":
-                        out = storage_screen.render(state)
-                    elif name == "system":
-                        out = system_screen.render(state)
-                    elif name == "network":
-                        out = network_screen.render(state)
-                    elif name == "torrent":
-                        out = torrent_screen.render(state)
-                    else:
-                        out = status_screen.render(state)
-                        
-                lcd.update(out.line1, out.line2)
+                    except Exception as e:
+                        logging.warning(f"Collector {c.__class__.__name__} failed: {e}")
+
+                health_results = engine.evaluate(state)
+                top_alert = highest_priority_alert(health_results)
+
+                output = manager.render(state, health_results)
+                lcd.update(output.line1, output.line2)
+
                 time.sleep(3)
                 manager.next()
-                
-        except Exception:
+
+        except Exception as e:
+            logging.error(f"LCD error: {e}")
             time.sleep(5)
 
 if __name__ == "__main__":
