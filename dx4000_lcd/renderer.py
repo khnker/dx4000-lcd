@@ -6,18 +6,27 @@ def render_line(text: str) -> str:
     return escaped[:16]
 
 
+import time
+
+
 class ScrollText:
-    def __init__(self):
+    def __init__(self, speed=2):
         self.pos = 0
         self.text = ""
+        self.speed = speed
+        self.last_tick = 0.0
 
     def update(self, text: str) -> str:
         if text != self.text:
             self.text = text
             self.pos = 0
+            self.last_tick = time.time()
         if len(text) <= 16:
             return text
-        self.pos = (self.pos + 1) % len(text)
+        now = time.time()
+        if now - self.last_tick >= self.speed:
+            self.pos = (self.pos + 1) % len(text)
+            self.last_tick = now
         visible = text[self.pos:self.pos + 16]
         if len(visible) < 16:
             visible += text[:16 - len(visible)]
