@@ -1,56 +1,24 @@
 # DX4000 LCD Dashboard
 
-Sistema de monitoreo para el NAS WD DX4000 con pantalla LCD 16x2 (HD44780, wiring Winamp).
+Dashboard para el LCD 16x2 del WD Sentinel DX4000.
 
-## Hardware
+## Problemas conocidos y soluciones
 
-- LCD: HD44780 compatible, 16x2
-- Paralelo: 0x378 (parport0)
-- Driver: hd44780 via LCDd (LCDproc)
+### 1. Protocolo LCDproc (Escapado de espacios)
+El protocolo de LCDproc es estricto. Al enviar widgets mediante `widget_set`, los espacios en el texto deben ser escapados con una barra invertida (`\ `) para que el daemon no los interprete como separadores de argumentos.
+* **Error:** `widget_set dash hd 1 1 CPU 31C P14` (causa fallo o renderizado incorrecto)
+* **Solución:** `widget_set dash hd 1 1 CPU\ 31C\ P14`
 
-## Archivos
+### 2. Configuración LCDd (Size y Contrast)
+El driver `hd44780` para el wiring Winamp del DX4000 requiere configuraciones específicas:
+* **Size**: Debe ser `16x2`. Usar `20x4` hará que la segunda línea no sea visible o se desplace erróneamente.
+* **Contrast**: Es necesario ajustar `Contrast=800` (o similar, dependiendo de la unidad) en `/etc/LCDd.conf` para asegurar visibilidad en la línea 2.
 
-- `nas_lcd.py` - Script principal (funcional)
-- `LCDd.conf` - Configuración del daemon LCDd
-- `nas-lcd.service` - Service file systemd
+### 3. Estructura de archivos y Módulos
+* **Conflictos de Importación**: Se debe evitar crear directorios con el mismo nombre que los módulos `.py` (ej: no tener `dx4000_lcd/` directorio y `dx4000_lcd.py` archivo al mismo tiempo).
+* **Servicio systemd**: Asegurarse de que el script instalado en `/usr/local/bin/` sea ejecutable (`chmod +x`).
 
-## Despliegue en .101
-
-```bash
-# Copiar script
-scp nas_lcd.py root@10.10.10.101:/usr/local/bin/nas_lcd.py
-
-# Copiar config LCDd
-scp LCDd.conf root@10.10.10.101:/etc/LCDd.conf
-
-# Copiar service
-scp nas-lcd.service root@10.10.10.101:/etc/systemd/system/nas-lcd.service
-
-# En el NAS
-systemctl daemon-reload
-systemctl restart lcdproc.service
-systemctl restart nas-lcd.service
-```
-
-## Requisitos
-
-- `smartctl` (smartmontools) para temperaturas de disco
-- `lcdproc` + `lcdproc-extra-drivers` para el daemon LCD
-
-## Pantalla
-
-```
-L1: CPU 31C P14    (temperatura CPU + PWM fan)
-L2: DSK 41C 14%    (temp max disco + uso storage)
-```
-
-## Bug conocido
-
-Los espacios en el texto deben escaparse con `\` para el protocolo LCDproc:
-```python
-# Correcto
-l1 = f"CPU {temp}C".replace(" ", "\\ ")
-
-# Incorrecto (LCDd ignora el comando)
-l1 = f"CPU {temp}C"
-```
+### 4. Hardware/Wiring
+Si tras aplicar el escapado de espacios y el `Size=16x2` correcto no se ve la segunda línea, verificar:
+1. Conexión física del cable paralelo (Winamp wiring).
+2. Potenciómetro de contraste físico del LCD.
