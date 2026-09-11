@@ -50,6 +50,9 @@ class TorrentState:
     dl_speed: int = 0
     ul_speed: int = 0
     active_torrents: int = 0
+    torrent_name: str = ""
+    progress: float = 0.0
+    eta: int = 0
 
 
 @dataclass

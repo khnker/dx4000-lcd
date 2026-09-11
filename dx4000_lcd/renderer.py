@@ -2,7 +2,8 @@ from dx4000_lcd.state import SystemState
 
 
 def render_line(text: str) -> str:
-    return text[:16].ljust(16).replace(" ", "\\ ")
+    escaped = text.replace(" ", "\\ ")
+    return escaped[:16]
 
 
 class HealthEngine:
@@ -41,9 +42,16 @@ def build_screens(state: SystemState):
     # Pantalla 3: TORRENT
     dl_mb = state.torrent.dl_speed / (1024 * 1024)
     ul_mb = state.torrent.ul_speed / (1024 * 1024)
-    screens.append((
-        render_line(f"TOR {state.torrent.active_torrents} ACTIVE"),
-        render_line(f"DL {dl_mb:.1f}M UP{ul_mb:.1f}M")
-    ))
+    if state.torrent.torrent_name:
+        name_short = state.torrent.torrent_name[:13]
+        screens.append((
+            render_line(f"{name_short}"),
+            render_line(f"{state.torrent.progress:.0f}% DL{dl_mb:.1f}M")
+        ))
+    else:
+        screens.append((
+            render_line(f"TOR {state.torrent.active_torrents} IDLE"),
+            render_line(f"DL {dl_mb:.1f}M UP{ul_mb:.1f}M")
+        ))
 
     return screens
