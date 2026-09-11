@@ -2,13 +2,16 @@ import time
 import socket
 import logging
 from dx4000_lcd.state import SystemState
-from dx4000_lcd.collectors import CpuCollector, DiskTempCollector, FanCollector, StorageCollector
+from dx4000_lcd.collectors import (
+    CpuCollector, MemoryCollector, DiskTempCollector, FanCollector,
+    StorageCollector, NetworkCollector, UptimeCollector
+)
 from dx4000_lcd.collectors.torrents import TorrentCollector
 from dx4000_lcd.renderer import build_screens
 
 LCD_HOST = "127.0.0.1"
 LCD_PORT = 13666
-INTERVAL = 3
+SCREEN_INTERVAL = 4
 
 logging.basicConfig(
     filename="/tmp/nas_lcd.log",
@@ -21,16 +24,21 @@ def send(s, cmd):
     logging.debug("SENT: %s", cmd)
 
 def main():
-    logging.info("Starting modular nas_lcd daemon")
+    logging.info("Starting modular nas_lcd daemon v2")
     state = SystemState()
-    scroll = ScrollText(speed=2)
-    collectors = [
+    fast_collectors = [
         CpuCollector(),
-        DiskTempCollector(),
+        MemoryCollector(),
         FanCollector(),
         StorageCollector(mountpoint="/mnt/media"),
+        NetworkCollector(),
         TorrentCollector(),
+        UptimeCollector(),
     ]
+    slow_collectors = [
+        DiskTempCollector(),
+    ]
+    screen_idx = 0
 
     while True:
         try:
@@ -43,21 +51,28 @@ def main():
             send(s, "widget_add dash hd2 string")
             time.sleep(0.5)
 
+            slow_tick = 0
             while True:
-                for c in collectors:
+                for c in fast_collectors:
                     try:
                         c.read(state)
                     except Exception as e:
                         logging.error("Collector %s: %s", c.__class__.__name__, e)
 
-                # Actualizar scroll siempre (incluso si no se muestra TORRENT)
-                scroll.update(state.torrent.torrent_name)
+                slow_tick += 1
+                if slow_tick % 10 == 0:
+                    for c in slow_collectors:
+                        try:
+                            c.read(state)
+                        except Exception as e:
+                            logging.error("Collector %s: %s", c.__class__.__name__, e)
 
                 screens = build_screens(state)
-                for l1, l2 in screens:
-                    send(s, "widget_set dash hd 1 1 " + l1)
-                    send(s, "widget_set dash hd2 1 2 " + l2)
-                    time.sleep(INTERVAL)
+                l1, l2 = screens[screen_idx]
+                send(s, "widget_set dash hd 1 1 " + l1)
+                send(s, "widget_set dash hd2 1 2 " + l2)
+                screen_idx = (screen_idx + 1) % len(screens)
+                time.sleep(SCREEN_INTERVAL)
 
         except Exception as e:
             logging.error("LCD error: %s", e)

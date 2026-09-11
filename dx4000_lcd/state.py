@@ -5,8 +5,15 @@ from typing import Optional, List
 @dataclass
 class CpuState:
     usage_pct: float = 0.0
-    temp_c: Optional[float] = None
+    temp_c: Optional[int] = None
     load_1m: float = 0.0
+
+
+@dataclass
+class MemoryState:
+    used_pct: float = 0.0
+    available_mb: float = 0.0
+    total_mb: float = 0.0
 
 
 @dataclass
@@ -18,14 +25,13 @@ class FanState:
 @dataclass
 class DiskState:
     name: str = ""
-    temp_c: Optional[float] = None
+    temp_c: Optional[int] = None
     health: str = "UNKNOWN"
-    read_bps: int = 0
-    write_bps: int = 0
 
 
 @dataclass
 class StorageState:
+    mountpoint: str = "/"
     total_bytes: int = 0
     used_bytes: int = 0
     free_bytes: int = 0
@@ -40,7 +46,7 @@ class StorageState:
 
 @dataclass
 class NetworkState:
-    ip: str = "0.0.0.0"
+    ip: str = ""
     rx_bps: int = 0
     tx_bps: int = 0
 
@@ -56,20 +62,13 @@ class TorrentState:
 
 
 @dataclass
-class BackupState:
-    status: str = "IDLE"
-    progress: float = 0.0
-    last_ok: str = ""
-    last_error: str = ""
-
-
-@dataclass
 class SystemState:
     cpu: CpuState = field(default_factory=CpuState)
+    memory: MemoryState = field(default_factory=MemoryState)
     fan: FanState = field(default_factory=FanState)
     disks: List[DiskState] = field(default_factory=list)
     storage: StorageState = field(default_factory=StorageState)
     network: NetworkState = field(default_factory=NetworkState)
     torrent: TorrentState = field(default_factory=TorrentState)
-    backup: BackupState = field(default_factory=BackupState)
+    uptime_seconds: int = 0
     status: str = "OK"
