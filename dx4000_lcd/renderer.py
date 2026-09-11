@@ -6,6 +6,24 @@ def render_line(text: str) -> str:
     return escaped[:16]
 
 
+class ScrollText:
+    def __init__(self):
+        self.pos = 0
+        self.text = ""
+
+    def update(self, text: str) -> str:
+        if text != self.text:
+            self.text = text
+            self.pos = 0
+        if len(text) <= 16:
+            return text
+        self.pos = (self.pos + 1) % len(text)
+        visible = text[self.pos:self.pos + 16]
+        if len(visible) < 16:
+            visible += text[:16 - len(visible)]
+        return visible
+
+
 class HealthEngine:
     @staticmethod
     def calculate(state: SystemState) -> str:
@@ -17,20 +35,18 @@ class HealthEngine:
         return "OK"
 
 
-def build_screens(state: SystemState):
+def build_screens(state: SystemState, scroll: ScrollText):
     disk_temps = {d.name: d.temp_c for d in state.disks if d.temp_c is not None}
     disk_max = max(disk_temps.values()) if disk_temps else 0
     status = HealthEngine.calculate(state)
 
     screens = []
 
-    # Pantalla 1: HOME
     screens.append((
         render_line(f"NAS {status} {state.cpu.temp_c or 0:.0f}C"),
         render_line(f"DSK {disk_max:.0f}C {state.torrent.active_torrents}T")
     ))
 
-    # Pantalla 2: STORAGE (mergerfs pool)
     total_tb = state.storage.total_bytes / (1024 ** 4)
     used_tb = state.storage.used_bytes / (1024 ** 4)
     pct = state.storage.used_pct
@@ -39,13 +55,12 @@ def build_screens(state: SystemState):
         render_line(f"FREE {pct:.0f}% USED")
     ))
 
-    # Pantalla 3: TORRENT
     dl_mb = state.torrent.dl_speed / (1024 * 1024)
     ul_mb = state.torrent.ul_speed / (1024 * 1024)
     if state.torrent.torrent_name:
-        name_short = state.torrent.torrent_name[:13]
+        scrolled = scroll.update(state.torrent.torrent_name)
         screens.append((
-            render_line(f"{name_short}"),
+            render_line(scrolled),
             render_line(f"{state.torrent.progress:.0f}% DL{dl_mb:.1f}M")
         ))
     else:

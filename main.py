@@ -4,7 +4,7 @@ import logging
 from dx4000_lcd.state import SystemState
 from dx4000_lcd.collectors import CpuCollector, DiskTempCollector, FanCollector, StorageCollector
 from dx4000_lcd.collectors.torrents import TorrentCollector
-from dx4000_lcd.renderer import build_screens
+from dx4000_lcd.renderer import build_screens, ScrollText
 
 LCD_HOST = "127.0.0.1"
 LCD_PORT = 13666
@@ -23,6 +23,7 @@ def send(s, cmd):
 def main():
     logging.info("Starting modular nas_lcd daemon")
     state = SystemState()
+    scroll = ScrollText()
     collectors = [
         CpuCollector(),
         DiskTempCollector(),
@@ -49,7 +50,7 @@ def main():
                     except Exception as e:
                         logging.error("Collector %s: %s", c.__class__.__name__, e)
 
-                screens = build_screens(state)
+                screens = build_screens(state, scroll)
                 for l1, l2 in screens:
                     send(s, "widget_set dash hd 1 1 " + l1)
                     send(s, "widget_set dash hd2 1 2 " + l2)
