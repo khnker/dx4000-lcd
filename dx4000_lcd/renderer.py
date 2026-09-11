@@ -1,7 +1,7 @@
 from dx4000_lcd.state import SystemState
 
 def render_line(text: str) -> str:
-    return text[:16].ljust(16)
+    return text[:16].ljust(16).replace(" ", "\\ ")
 
 class HealthEngine:
     @staticmethod
