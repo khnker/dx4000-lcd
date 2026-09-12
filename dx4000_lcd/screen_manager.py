@@ -8,37 +8,50 @@ from dx4000_lcd.screens.torrent import TorrentScreen
 from dx4000_lcd.screens.alert import AlertScreen
 
 class ScreenManager:
-    SCREENS = ("status", "storage", "torrent", "system", "network")
+    _screens = None
+    SCREEN_TIMES = {
+        "status": 4,
+        "storage": 3,
+        "torrent": 5,
+        "system": 3,
+        "network": 3,
+    }
 
     def __init__(self):
-        self.index = 0
-        self.manual_until = 0
+        if ScreenManager._screens is None:
+            ScreenManager._screens = {
+                "status": StatusScreen(),
+                "storage": StorageScreen(),
+                "system": SystemScreen(),
+                "network": NetworkScreen(),
+                "torrent": TorrentScreen(),
+            }
+        self._index = 0
+        self._manual_until = 0
+        self._alert_until = 0
+        self._screen_names = list(self._screens.keys())
+
+    @property
+    def current_screen_name(self) -> str:
+        return self._screen_names[self._index]
 
     def render(self, state, health_results=None) -> ScreenOutput:
-        # Prioritize alerts over normal rotation
+        # Check for alerts with expiration
         if health_results:
             for hr in health_results:
                 if hr.health.value in ("error", "warn"):
-                    return AlertScreen().render(hr)
+                    if time.monotonic() < self._alert_until:
+                        return AlertScreen().render(hr)
+                    else:
+                        self._alert_until = time.monotonic() + 5
+                        return AlertScreen().render(hr)
         
-        # Normal rotation
-        screen_name = self.SCREENS[self.index]
-        if screen_name == "status":
-            return StatusScreen().render(state)
-        elif screen_name == "storage":
-            return StorageScreen().render(state)
-        elif screen_name == "system":
-            return SystemScreen().render(state)
-        elif screen_name == "network":
-            return NetworkScreen().render(state)
-        elif screen_name == "torrent":
-            return TorrentScreen().render(state)
-        return StatusScreen().render(state)
+        return self._screens[self.current_screen_name].render(state)
 
     def next(self):
-        self.index = (self.index + 1) % len(self.SCREENS)
-        self.manual_until = time.monotonic() + 15
+        self._index = (self._index + 1) % len(self._screen_names)
+        self._manual_until = time.monotonic() + 15
 
     def previous(self):
-        self.index = (self.index - 1) % len(self.SCREENS)
-        self.manual_until = time.monotonic() + 15
+        self._index = (self._index - 1) % len(self._screen_names)
+        self._manual_until = time.monotonic() + 15
