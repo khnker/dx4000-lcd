@@ -9,5 +9,5 @@ class TelemetryValue:
     status: str = "UNKNOWN" # VALID, UNKNOWN, STALE, ERROR
 
     @property
-    value_or_default(self):
+    def value_or_default(self):
         return self.value
