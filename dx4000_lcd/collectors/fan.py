@@ -1,23 +1,26 @@
-import subprocess
+# FanCollector - reads fan RPM and PWM using hardware discovery
 import logging
-from dx4000_lcd.state import SystemState, FanState
+from dx4000_lcd.state import SystemState
+from dx4000_lcd.hardware import get_fan_input, get_pwm, find_hwmon
 
 class FanCollector:
     def __init__(self):
-        self._last_success = 0
+        self._hwmon_name = "nct6683"  # NCT6683 super I/O chip on DX4000
 
     def read(self, state: SystemState):
-        try:
-            with open("/sys/class/hwmon/hwmon1/fan2_input") as f:
-                state.fan.rpm = int(f.read().strip())
-            self._last_success = self._last_success
-        except Exception as e:
-            logging.warning(f"FanCollector failed: {e}")
-            state.fan.rpm = 0
+        # Try NCT6683 first (DX4000 has this super I/O)
+        rpm = get_fan_input(self._hwmon_name, fan_id=2)
+        if rpm is None:
+            # Fallback: try coretemp hwmon for fan
+            rpm = get_fan_input("coretemp", fan_id=2)
+        
+        pwm = get_pwm(self._hwmon_name, pwm_id=2)
+        if pwm is None:
+            pwm = get_pwm("coretemp", pwm_id=2)
 
-        try:
-            with open("/sys/class/hwmon/hwmon1/pwm2") as f:
-                state.fan.pwm = int(f.read().strip())
-        except Exception as e:
-            logging.warning(f"FanCollector PWM failed: {e}")
-            state.fan.pwm = None
+        if rpm is not None:
+            state.fan.rpm = rpm
+        else:
+            logging.warning("FanCollector: could not read fan RPM")
+
+        state.fan.pwm = pwm

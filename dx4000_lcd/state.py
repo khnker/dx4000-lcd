@@ -82,6 +82,4 @@ class SystemState:
     network: NetworkState = field(default_factory=NetworkState)
     torrent: Optional[TorrentState] = field(default_factory=TorrentState)
     uptime: UptimeState = field(default_factory=UptimeState)
-    torrent: TorrentState = field(default_factory=TorrentState)
-    uptime_seconds: int = 0
     status: str = "OK"
