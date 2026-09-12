@@ -28,11 +28,12 @@ class DiskSmartCollector:
             data = json.loads(res.stdout)
             
             # Get temperature from SMART attribute 194 or Temperature_Celsius
+            # Use 'value' (normalized), not 'raw' (raw byte encoding)
             temp = None
             attrs = data.get("ata_smart_attributes", {}).get("table", [])
             for attr in attrs:
                 if attr.get("id") == 194 or "Temperature" in str(attr.get("name", "")):
-                    temp = attr.get("raw", {}).get("value")
+                    temp = attr.get("value")  # This is the temperature in Celsius
                     break
 
             # Get health status
