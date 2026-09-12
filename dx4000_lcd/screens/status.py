@@ -1,39 +1,22 @@
 from dx4000_lcd.screens import ScreenOutput
 from dx4000_lcd.renderer import fit_line
 from dx4000_lcd.bar import render_bar
-
-def format_temp(value):
-    if value is None:
-        return "--"
-    return f"{value:02d}C"
+from dx4000_lcd.formatters import format_temp
+from dx4000_lcd.icons import THERMO, FAN
 
 class StatusScreen:
     def render(self, state) -> ScreenOutput:
-        cpu = format_temp(state.cpu.temp_c)
+        cpu_temp = format_temp(state.cpu.temp_c.value)
         
-        # Get hottest disk
         disk_temps = [d.temp_c for d in state.disks if d.temp_c is not None]
-        disk = format_temp(max(disk_temps)) if disk_temps else "--"
+        disk_temp = format_temp(max(disk_temps)) if disk_temps else "--C"
         
-        # Storage: handle None properly
-        used_pct = state.storage.used_pct
-        if used_pct is None:
-            sto_pct = "--"
-            bar = "-------"
-        else:
-            sto_pct = f"{int(used_pct)}%"
-            bar = render_bar(used_pct, 7)
-
-        # Fan
-        fan_rpm = state.fan.rpm
-        if fan_rpm is None or fan_rpm == 0:
-            fan = "--"
-        elif fan_rpm >= 1000:
-            fan = f"{fan_rpm // 1000}K"
-        else:
-            fan = str(fan_rpm)
-
+        fan = state.fan.rpm or 0
+        fan_text = f"{fan // 1000}K" if fan >= 1000 else str(fan)
+        
+        pct = round(state.storage.used_pct)
+        
         return ScreenOutput(
-            line1=fit_line(f"CPU {cpu} D{disk}"),
-            line2=fit_line(f"STO {bar} {sto_pct}"),
+            line1=fit_line(f"{THERMO}{cpu_temp} {THERMO}{disk_temp} {FAN}{fan_text}"),
+            line2=fit_line(f"STO {render_bar(pct, 7)} {pct}%"),
         )

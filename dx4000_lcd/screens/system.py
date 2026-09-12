@@ -1,28 +1,26 @@
 from dx4000_lcd.screens import ScreenOutput
 from dx4000_lcd.renderer import fit_line
-
-def format_temp(value):
-    if value is None:
-        return "--"
-    return f"{value:02d}C"
-
-def format_pct(value):
-    if value is None:
-        return "--"
-    return f"{int(value)}%"
+from dx4000_lcd.formatters import format_temp, format_bytes
 
 class SystemScreen:
     def render(self, state) -> ScreenOutput:
-        cpu_usage = format_pct(state.cpu.usage_pct)
-        cpu_temp = format_temp(state.cpu.temp_c)
-        ram_pct = "--"
+        cpu = state.cpu
         
-        if hasattr(state, 'memory') and state.memory.used_pct:
-            ram_pct = format_pct(state.memory.used_pct)
+        line1 = (
+            f"CPU {cpu.usage_pct.value if cpu.usage_pct.value is not None else 0}% "
+            f"{format_temp(cpu.temp_c.value)} "
+            f"L{cpu.load_1m.value if cpu.load_1m.value is not None else 0:.2f}"
+        )
         
-        load = f"{state.cpu.load_1m:.2f}" if state.cpu.load_1m else "--"
+        used_mb = state.memory.total_mb - state.memory.available_mb
+        
+        line2 = (
+            f"RAM {state.memory.used_pct:.0f}% "
+            f"{format_bytes(int(used_mb * 1024 * 1024))}/"
+            f"{format_bytes(int(state.memory.total_mb * 1024 * 1024))}"
+        )
         
         return ScreenOutput(
-            line1=fit_line(f"CPU {cpu_usage} {cpu_temp}"),
-            line2=fit_line(f"RAM {ram_pct} L{load}"),
+            line1=fit_line(line1),
+            line2=fit_line(line2),
         )

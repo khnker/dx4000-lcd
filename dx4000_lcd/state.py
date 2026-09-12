@@ -10,6 +10,10 @@ class TelemetryValue:
     def is_valid(self) -> bool:
         return self.status == "VALID"
 
+    @property
+    def value_or_default(self):
+        return self.value
+
 @dataclass
 class CpuState:
     usage_pct: TelemetryValue = field(default_factory=TelemetryValue)
