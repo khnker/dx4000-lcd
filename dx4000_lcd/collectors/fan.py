@@ -1,26 +1,16 @@
-# FanCollector - reads fan RPM and PWM using hardware discovery
 import logging
 from dx4000_lcd.state import SystemState
-from dx4000_lcd.hardware import get_fan_input, get_pwm, find_hwmon
+from dx4000_lcd.hardware import get_fan_input, get_pwm
 
 class FanCollector:
-    def __init__(self):
-        self._hwmon_name = "nct6683"  # NCT6683 super I/O chip on DX4000
-
     def read(self, state: SystemState):
-        # Try NCT6683 first (DX4000 has this super I/O)
-        rpm = get_fan_input(self._hwmon_name, fan_id=2)
-        if rpm is None:
-            # Fallback: try coretemp hwmon for fan
-            rpm = get_fan_input("coretemp", fan_id=2)
-        
-        pwm = get_pwm(self._hwmon_name, pwm_id=2)
-        if pwm is None:
-            pwm = get_pwm("coretemp", pwm_id=2)
-
-        if rpm is not None:
-            state.fan.rpm = rpm
-        else:
-            logging.warning("FanCollector: could not read fan RPM")
-
-        state.fan.pwm = pwm
+        try:
+            # Using hardware discovery via hardware.py (assuming nct6683 or similar)
+            # Hardcoded fan_id=2 based on previous successful tests
+            state.fan.rpm = get_fan_input("nct6683", fan_id=2)
+            state.fan.pwm = get_pwm("nct6683", pwm_id=2)
+            state.fan.status = "VALID"
+        except Exception as e:
+            logging.warning(f"FanCollector failed: {e}")
+            state.fan.rpm = 0
+            state.fan.status = "ERROR"

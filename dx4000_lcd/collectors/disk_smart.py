@@ -19,7 +19,7 @@ class DiskSmartCollector:
         name = dev.replace("/dev/", "")
         try:
             res = subprocess.run(
-                ["smartctl", "-A", "-j", dev],
+                ["/usr/sbin/smartctl", "-A", "-j", dev],
                 capture_output=True, text=True, timeout=5
             )
             if not res.stdout:

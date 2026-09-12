@@ -1,8 +1,14 @@
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Any
 
+@dataclass
+class TelemetryValue:
+    value: Any = None
+    timestamp: float = 0.0
+    status: str = "UNKNOWN"
 
-from dx4000_lcd.telemetry import TelemetryValue
+    def is_valid(self) -> bool:
+        return self.status == "VALID"
 
 @dataclass
 class CpuState:
@@ -10,27 +16,24 @@ class CpuState:
     temp_c: TelemetryValue = field(default_factory=TelemetryValue)
     load_1m: TelemetryValue = field(default_factory=TelemetryValue)
 
-
-
 @dataclass
 class MemoryState:
     used_pct: float = 0.0
     available_mb: float = 0.0
     total_mb: float = 0.0
 
-
 @dataclass
 class FanState:
     rpm: int = 0
     pwm: Optional[int] = None
-
+    status: str = "UNKNOWN"
 
 @dataclass
 class DiskState:
     name: str = ""
     temp_c: Optional[int] = None
     health: str = "UNKNOWN"
-
+    smart_status: str = "UNKNOWN"
 
 @dataclass
 class StorageState:
@@ -39,20 +42,18 @@ class StorageState:
     used_bytes: int = 0
     free_bytes: int = 0
     mergerfs: bool = False
-
+    status: str = "UNKNOWN"
     @property
     def used_pct(self) -> float:
         if self.total_bytes == 0:
             return 0.0
         return (self.used_bytes / self.total_bytes) * 100.0
 
-
 @dataclass
 class NetworkState:
     ip: str = ""
     rx_bps: int = 0
     tx_bps: int = 0
-
 
 @dataclass
 class TorrentState:
@@ -62,7 +63,7 @@ class TorrentState:
     torrent_name: str = ""
     progress: float = 0.0
     eta: int = 0
-
+    status: str = "UNKNOWN"
 
 @dataclass
 class UptimeState:
@@ -70,7 +71,6 @@ class UptimeState:
     days: int = 0
     hours: int = 0
     minutes: int = 0
-
 
 @dataclass
 class SystemState:
@@ -80,6 +80,6 @@ class SystemState:
     disks: List[DiskState] = field(default_factory=list)
     storage: StorageState = field(default_factory=StorageState)
     network: NetworkState = field(default_factory=NetworkState)
-    torrent: Optional[TorrentState] = field(default_factory=TorrentState)
+    torrent: TorrentState = field(default_factory=TorrentState)
     uptime: UptimeState = field(default_factory=UptimeState)
     status: str = "OK"
