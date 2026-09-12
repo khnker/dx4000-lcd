@@ -47,7 +47,30 @@ def get_pwm(hwmon_name: str, pwm_id: int = 2) -> Optional[int]:
     return None
 
 def discover_disks() -> list[str]:
-    return [str(p) for p in sorted(Path("/dev").glob("sd[a-z]"))]
+    """Discover all block devices that are physical disks (not partitions)."""
+    disks = []
+    for path in Path("/sys/block").iterdir():
+        name = path.name
+        # Skip loop, ram, and partition devices
+        if name.startswith(("loop", "ram", "zram")):
+            continue
+        # Only include sdX, nvmeXn1, etc.
+        if name.startswith(("sd", "nvme", "vd", "hd")):
+            # Skip partitions (e.g., sda1)
+            if name[-1].isdigit() and not name[:-1].endswith("p"):
+                continue
+            disks.append(f"/dev/{name}")
+    return sorted(disks)
+
+def discover_all_devices() -> list[str]:
+    """Discover all block devices including partitions."""
+    devices = []
+    for path in Path("/sys/block").iterdir():
+        name = path.name
+        if name.startswith(("loop", "ram", "zram")):
+            continue
+        devices.append(f"/dev/{name}")
+    return sorted(devices)
 
 def get_all_hwmon_devices() -> Dict[str, Path]:
     devices = {}

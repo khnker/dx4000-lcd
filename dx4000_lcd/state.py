@@ -2,11 +2,14 @@ from dataclasses import dataclass, field
 from typing import Optional, List
 
 
+from dx4000_lcd.telemetry import TelemetryValue
+
 @dataclass
 class CpuState:
-    usage_pct: float = 0.0
-    temp_c: Optional[int] = None
-    load_1m: float = 0.0
+    usage_pct: TelemetryValue = field(default_factory=TelemetryValue)
+    temp_c: TelemetryValue = field(default_factory=TelemetryValue)
+    load_1m: TelemetryValue = field(default_factory=TelemetryValue)
+
 
 
 @dataclass
