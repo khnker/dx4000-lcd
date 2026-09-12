@@ -1,8 +1,9 @@
+# DiskSmartCollector - reads SMART data using JSON output
+import logging
 from dx4000_lcd.state import SystemState, DiskState
 from dx4000_lcd.hardware import discover_disks
 import subprocess
 import json
-import logging
 
 class DiskSmartCollector:
     def read(self, state: SystemState):
@@ -21,46 +22,34 @@ class DiskSmartCollector:
                 ["smartctl", "-A", "-j", dev],
                 capture_output=True, text=True, timeout=5
             )
-            # SMART can return data even with non-zero exit codes
             if not res.stdout:
-                logging.warning(f"DiskSmartCollector: no output from {dev}")
-                return DiskState(name=name, temp_c=None, health="UNKNOWN")
+                return DiskState(name=name, temp_c=None, health="NO_DATA")
 
             data = json.loads(res.stdout)
             
-            # Get temperature
+            # Get temperature from SMART attribute 194 or Temperature_Celsius
             temp = None
             attrs = data.get("ata_smart_attributes", {}).get("table", [])
             for attr in attrs:
-                if attr.get("id") == 194 or "Temperature" in attr.get("name", ""):
+                if attr.get("id") == 194 or "Temperature" in str(attr.get("name", "")):
                     temp = attr.get("raw", {}).get("value")
                     break
 
-            # Get SMART health status
+            # Get health status
             overall = data.get("smart_status", {}).get("passed", None)
             if overall is True:
                 health = "OK"
             elif overall is False:
                 health = "FAIL"
             else:
-                # Check power_on_hours as fallback indicator
-                power_on = None
-                for attr in attrs:
-                    if attr.get("id") == 9:  # Power-On Hours
-                        power_on = attr.get("raw", {}).get("value")
-                if power_on is not None and power_on > 0:
-                    health = "OK"
-                else:
-                    health = "UNKNOWN"
+                health = "UNKNOWN"
 
             return DiskState(name=name, temp_c=temp, health=health)
 
         except subprocess.TimeoutExpired:
-            logging.warning(f"DiskSmartCollector: timeout on {dev}")
             return DiskState(name=name, temp_c=None, health="TIMEOUT")
-        except json.JSONDecodeError as e:
-            logging.warning(f"DiskSmartCollector: JSON parse error on {dev}: {e}")
-            return DiskState(name=name, temp_c=None, health="PARSE_ERROR")
+        except json.JSONDecodeError:
+            return DiskState(name=name, temp_c=None, health="PARSE_ERR")
         except Exception as e:
             logging.warning(f"DiskSmartCollector error on {dev}: {e}")
             return DiskState(name=name, temp_c=None, health="ERROR")

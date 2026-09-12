@@ -65,6 +65,14 @@ class TorrentState:
 
 
 @dataclass
+class UptimeState:
+    seconds: int = 0
+    days: int = 0
+    hours: int = 0
+    minutes: int = 0
+
+
+@dataclass
 class SystemState:
     cpu: CpuState = field(default_factory=CpuState)
     memory: MemoryState = field(default_factory=MemoryState)
@@ -72,6 +80,8 @@ class SystemState:
     disks: List[DiskState] = field(default_factory=list)
     storage: StorageState = field(default_factory=StorageState)
     network: NetworkState = field(default_factory=NetworkState)
+    torrent: Optional[TorrentState] = field(default_factory=TorrentState)
+    uptime: UptimeState = field(default_factory=UptimeState)
     torrent: TorrentState = field(default_factory=TorrentState)
     uptime_seconds: int = 0
     status: str = "OK"
