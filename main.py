@@ -4,7 +4,7 @@ from dx4000_lcd.lcdproc import LCDProc
 from dx4000_lcd.screen_manager import ScreenManager
 from dx4000_lcd.health import HealthEngine, highest_priority_alert
 from dx4000_lcd.state import SystemState
-from dx4000_lcd.collectors import CpuCollector, DiskTempCollector, FanCollector, StorageCollector
+from dx4000_lcd.collectors import CpuCollector, DiskCollector, FanCollector, StorageCollector, MemoryCollector, NetworkCollector, TorrentCollector, UptimeCollector
 from dx4000_lcd.cgram import load_cgram
 
 logging.basicConfig(level=logging.INFO)
@@ -13,9 +13,13 @@ def main():
     state = SystemState()
     collectors = [
         CpuCollector(),
-        DiskTempCollector(),
+        MemoryCollector(),
         FanCollector(),
+        DiskCollector(),
         StorageCollector(),
+        NetworkCollector(),
+        TorrentCollector(),
+        UptimeCollector(),
     ]
 
     lcd = LCDProc()
