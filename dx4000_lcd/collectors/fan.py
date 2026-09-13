@@ -5,8 +5,8 @@ from dx4000_lcd.hardware import get_fan_input, get_pwm
 class FanCollector:
     def read(self, state: SystemState):
         try:
-            rpm = get_fan_input("nct6683", fan_id=2)
-            pwm = get_pwm("nct6683", pwm_id=2)
+            rpm = get_fan_input("nct6776", fan_id=2)
+            pwm = get_pwm("nct6776", pwm_id=2)
             
             if rpm is not None:
                 state.fan.rpm = rpm

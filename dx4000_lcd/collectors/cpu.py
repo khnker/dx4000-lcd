@@ -11,7 +11,7 @@ class CpuCollector:
     def read(self, state: SystemState):
         now = time.monotonic()
         
-        temp = get_temp_input("coretemp", temp_id=2)
+        temp = get_temp_input("coretemp", temp_id=3)
         if temp is not None:
             state.cpu.temp_c = TelemetryValue(value=temp, timestamp=now, status="VALID")
         else:
