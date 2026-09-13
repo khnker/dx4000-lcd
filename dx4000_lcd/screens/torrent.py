@@ -33,7 +33,10 @@ class TorrentScreen:
         else:
             eta = "--"
         
-        name = torrent.torrent_name[:12] if torrent.torrent_name else "TOR"
+        if torrent.active_torrents > 1:
+            name = f"{torrent.torrent_name[:8]} +{torrent.active_torrents - 1}"
+        else:
+            name = torrent.torrent_name[:12] if torrent.torrent_name else "TOR"
         
         return ScreenOutput(
             line1=fit_line(f"{PLAY} {name}"),
