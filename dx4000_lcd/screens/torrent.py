@@ -33,7 +33,9 @@ class TorrentScreen:
         else:
             eta = "--"
         
+        name = torrent.torrent_name[:12] if torrent.torrent_name else "TOR"
+        
         return ScreenOutput(
-            line1=fit_line(f"{PLAY} DL {dl} {progress}%"),
-            line2=fit_line(f"ETA {eta} {torrent.active_torrents}T"),
+            line1=fit_line(f"{PLAY} {name}"),
+            line2=fit_line(f"DL {dl} {progress}% ETA {eta}"),
         )
