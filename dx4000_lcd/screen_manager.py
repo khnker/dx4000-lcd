@@ -5,7 +5,7 @@ from dx4000_lcd.screens.storage import StorageScreen
 from dx4000_lcd.screens.system import SystemScreen
 from dx4000_lcd.screens.network import NetworkScreen
 from dx4000_lcd.screens.torrent import TorrentScreen
-from dx4000_lcd.screens.disks import DiskScreen
+from dx4000_lcd.screens.disk import DiskScreen
 from dx4000_lcd.screens.alert import AlertScreen
 from dx4000_lcd.health import highest_priority_alert
 
@@ -23,6 +23,8 @@ class ScreenManager:
     def __init__(self):
         self.index = 0
         self.manual_until = 0
+        self.torrent_index = 0
+        self.torrent_cycle = 0
         self.screens = {
             "status": StatusScreen(),
             "storage": StorageScreen(),
@@ -39,6 +41,16 @@ class ScreenManager:
                 return AlertScreen().render(top_alert)
 
         screen_name = self.SCREENS[self.index]
+        
+        if screen_name == "torrent":
+            self.torrent_cycle += 1
+            if self.torrent_cycle >= 3:
+                self.torrent_cycle = 0
+                if state.torrent and state.torrent.torrent_names:
+                    self.torrent_index = (self.torrent_index + 1) % len(state.torrent.torrent_names)
+            screen = self.screens.get(screen_name)
+            return screen.render(state, self.torrent_index)
+
         screen = self.screens.get(screen_name, self.screens["status"])
         return screen.render(state)
 
@@ -49,3 +61,9 @@ class ScreenManager:
     def previous(self):
         self.index = (self.index - 1) % len(self.SCREENS)
         self.manual_until = time.monotonic() + 15
+
+    def current_screen_name(self) -> str:
+        return self.SCREENS[self.index]
+    
+    def current_duration(self) -> int:
+        return self.SCREEN_TIMES.get(self.SCREENS[self.index], 3)

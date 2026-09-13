@@ -65,6 +65,7 @@ class TorrentState:
     ul_speed: int = 0
     active_torrents: int = 0
     torrent_name: str = ""
+    torrent_names: List[str] = field(default_factory=list)
     progress: float = 0.0
     eta: int = 0
     status: str = "UNKNOWN"

@@ -13,7 +13,6 @@ class TorrentCollector:
 
     def read(self, state: SystemState):
         try:
-            # Login if needed
             if not self._logged_in:
                 try:
                     login_url = f"{self.host}/api/v2/auth/login"
@@ -21,10 +20,11 @@ class TorrentCollector:
                     self._logged_in = resp.status_code == 200 and "Ok" in resp.text
                 except:
                     self._logged_in = False
-            
+
             if not self._logged_in:
                 state.torrent = TorrentState(
                     torrent_name="OFFLINE",
+                    torrent_names=[],
                     dl_speed=0,
                     ul_speed=0,
                     active_torrents=0,
@@ -33,50 +33,63 @@ class TorrentCollector:
                 )
                 return
 
-            # Get torrent info
-            try:
-                info_url = f"{self.host}/api/v2/torrents/info"
-                resp = self._session.get(info_url, timeout=5)
-                if resp.status_code != 200:
-                    raise Exception("API error")
-                
-                torrents = resp.json()
-                if not torrents:
-                    state.torrent = TorrentState(torrent_name="IDLE", dl_speed=0, ul_speed=0, active_torrents=0, progress=0.0, eta=0)
-                    return
+            info_url = f"{self.host}/api/v2/torrents/info"
+            resp = self._session.get(info_url, timeout=5)
+            if resp.status_code != 200:
+                raise Exception("API error")
 
-                # Get most interesting torrent
-                active = [t for t in torrents if t.get("state") in ["downloading", "uploading"]]
-                if not active:
-                    state.torrent = TorrentState(
-                        torrent_name=f"{len(torrents)} TOR",
-                        dl_speed=0,
-                        ul_speed=0,
-                        active_torrents=len(torrents),
-                        progress=0.0,
-                        eta=0
-                    )
-                    return
-
-                t = active[0]
-                name = t.get("name", "unknown")[:12]
-                dl = t.get("dlspeed", 0)
-                up = t.get("upspeed", 0)
-                progress = t.get("progress", 0) * 100
-                eta = t.get("eta", 0)
-                
+            torrents = resp.json()
+            if not torrents:
                 state.torrent = TorrentState(
-                    torrent_name=name,
-                    dl_speed=dl,
-                    ul_speed=up,
-                    active_torrents=len(active),
-                    progress=progress,
-                    eta=eta
+                    torrent_name="IDLE",
+                    torrent_names=[],
+                    dl_speed=0,
+                    ul_speed=0,
+                    active_torrents=0,
+                    progress=0.0,
+                    eta=0
                 )
-            except Exception as e:
-                logging.warning(f"TorrentCollector API error: {e}")
-                state.torrent = TorrentState(torrent_name="ERROR", dl_speed=0, ul_speed=0, active_torrents=0, progress=0.0, eta=0)
-                
+                return
+
+            all_names = [t.get("name", "") for t in torrents if t.get("name")]
+            active = [t for t in torrents if t.get("state") in ["downloading", "uploading"]]
+
+            if not active:
+                state.torrent = TorrentState(
+                    torrent_name="IDLE",
+                    torrent_names=all_names,
+                    dl_speed=0,
+                    ul_speed=0,
+                    active_torrents=len(torrents),
+                    progress=0.0,
+                    eta=0
+                )
+                return
+
+            t = active[0]
+            dl_speed = t.get("dlspeed", 0)
+            ul_speed = t.get("upspeed", 0)
+            progress = t.get("progress", 0.0) * 100
+            eta = t.get("eta", -1)
+
+            state.torrent = TorrentState(
+                torrent_name=t.get("name", "Unknown"),
+                torrent_names=all_names,
+                dl_speed=dl_speed,
+                ul_speed=ul_speed,
+                active_torrents=len(active),
+                progress=progress,
+                eta=eta
+            )
+
         except Exception as e:
             logging.warning(f"TorrentCollector failed: {e}")
-            state.torrent = TorrentState(torrent_name="OFFLINE", dl_speed=0, ul_speed=0, active_torrents=0, progress=0.0, eta=0)
+            state.torrent = TorrentState(
+                torrent_name="ERROR",
+                torrent_names=[],
+                dl_speed=0,
+                ul_speed=0,
+                active_torrents=0,
+                progress=0.0,
+                eta=0
+            )
