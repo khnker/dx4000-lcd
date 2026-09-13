@@ -13,7 +13,8 @@ class StatusScreen:
         disk_temp = format_temp(max(disk_temps)) if disk_temps else "--C"
         
         fan = state.fan.rpm or 0
-        fan_text = f"{fan // 1000}K" if fan >= 1000 else str(fan)
+        fan_val = fan.value if hasattr(fan, 'value') else fan
+        fan_text = f"{fan_val // 1000}K" if isinstance(fan_val, int) and fan_val >= 1000 else str(fan_val)
         
         pct = round(state.storage.used_pct)
         
