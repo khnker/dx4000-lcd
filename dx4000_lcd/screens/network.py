@@ -7,7 +7,7 @@ class NetworkScreen:
     def render(self, state) -> ScreenOutput:
         rx = format_speed(state.network.rx_bps)
         tx = format_speed(state.network.tx_bps)
-        
+
         return ScreenOutput(
             line1=fit_line(f"{DOWNLOAD} {rx}"),
             line2=fit_line(f"{UPLOAD} {tx}"),
