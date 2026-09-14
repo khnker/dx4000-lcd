@@ -2,15 +2,50 @@ from dx4000_lcd.screens import ScreenOutput
 from dx4000_lcd.renderer import fit_line
 from dx4000_lcd.formatters import format_temp
 
+
+def _val(obj):
+    if obj is None:
+        return None
+    if hasattr(obj, "value"):
+        return obj.value
+    return obj
+
+
 class SystemScreen:
     def render(self, state) -> ScreenOutput:
-        cpu = state.cpu
+        cpu = getattr(state, "cpu", None)
 
-        usage_val = cpu.usage_pct.value if hasattr(cpu.usage_pct, "value") and cpu.usage_pct.value is not None else (cpu.usage_pct if isinstance(cpu.usage_pct, (int, float)) else 0)
-        temp_val = cpu.temp_c.value if hasattr(cpu.temp_c, "value") and cpu.temp_c.value is not None else (cpu.temp_c if isinstance(cpu.temp_c, (int, float)) else 0)
-        load_val = cpu.load_1m.value if hasattr(cpu.load_1m, "value") and cpu.load_1m.value is not None else (cpu.load_1m if isinstance(cpu.load_1m, (int, float)) else 0)
+        usage_raw = None
+        if cpu is not None:
+            usage_raw = _val(getattr(cpu, "usage_pct", None))
+            if usage_raw is None:
+                usage_raw = _val(getattr(cpu, "usage", None))
+        usage = int(usage_raw) if usage_raw is not None else 0
 
-        line1 = fit_line(f"CPU {usage_val}% {format_temp(temp_val)}")
-        line2 = fit_line(f"RAM {state.memory.used_pct:.0f}% L{load_val:.2f}")
+        temp_raw = None
+        if cpu is not None:
+            temp_raw = getattr(cpu, "temp_c", None)
+            if temp_raw is None:
+                temp_raw = getattr(cpu, "temp", None)
+        temp = format_temp(_val(temp_raw))
 
-        return ScreenOutput(line1=line1, line2=line2)
+        memory = getattr(state, "memory", None)
+        ram_raw = _val(getattr(memory, "used_pct", None) if memory is not None else None)
+        ram_pct = round(ram_raw) if ram_raw is not None else 0
+
+        load_raw = None
+        if cpu is not None:
+            load_raw = getattr(cpu, "load_1m", None)
+            if load_raw is None:
+                load_raw = getattr(cpu, "load1", None)
+            if load_raw is None:
+                load_raw = getattr(cpu, "load", None)
+        if load_raw is None:
+            load_raw = getattr(state, "load", None)
+        load_val = _val(load_raw)
+        load = float(load_val) if load_val is not None else 0.0
+
+        return ScreenOutput(
+            line1=fit_line(f"CPU {usage}% {temp}"),
+            line2=fit_line(f"RAM {ram_pct}% L{load:.2f}"),
+        )
