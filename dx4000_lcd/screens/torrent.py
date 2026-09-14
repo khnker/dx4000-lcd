@@ -8,8 +8,7 @@ PLAY = "▶"
 
 
 class TorrentScreen:
-    def render(self, state, name_index=0) -> ScreenOutput:
-        del name_index
+    def render(self, state) -> ScreenOutput:
         torrent = getattr(state, "torrent", None)
 
         if torrent is None:
@@ -25,6 +24,12 @@ class TorrentScreen:
             return ScreenOutput(
                 line1=fit_line(f"{STOP} TOR IDLE"),
                 line2=fit_line("NO DOWNLOAD"),
+            )
+
+        if torrent.dl_speed and torrent.dl_speed < 100 * 1024:
+            return ScreenOutput(
+                line1=fit_line("! TOR SLOW"),
+                line2=fit_line(f"{DOWNLOAD} {dl}"),
             )
 
         count = f" {active}" if active else ""

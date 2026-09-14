@@ -1,4 +1,3 @@
-# Iconos LCD 16x2 - slots CGRAM 0-7
 BAR_25 = "\x00"
 BAR_50 = "\x01"
 BAR_75 = "\x02"
@@ -7,12 +6,3 @@ TEMP = "\x04"
 FAN = "\x05"
 DOWNLOAD = "\x06"
 UPLOAD = "\x07"
-
-# Legacy aliases
-BAR1 = BAR_25
-BAR2 = BAR_50
-BAR3 = BAR_75
-BAR4 = BAR_100
-THERMO = TEMP
-ARROW_DOWN = DOWNLOAD
-ARROW_UP = UPLOAD
