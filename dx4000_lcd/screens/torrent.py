@@ -1,10 +1,6 @@
 from dx4000_lcd.screens import ScreenOutput
 from dx4000_lcd.renderer import fit_line
-from dx4000_lcd.formatters import format_speed
-from dx4000_lcd.icons import DOWNLOAD
-
-STOP = "■"
-PLAY = "▶"
+from dx4000_lcd.tokens import StateToken, CountToken, SpeedToken
 
 
 class TorrentScreen:
@@ -13,27 +9,25 @@ class TorrentScreen:
 
         if torrent is None:
             return ScreenOutput(
-                line1=fit_line(f"{STOP} TOR OFFLINE"),
-                line2=fit_line("QBIT ERROR"),
+                line1=fit_line("TOR OFFLINE"),
+                line2=fit_line("NO DATA"),
             )
 
         active = torrent.active_torrents or 0
-        dl = format_speed(getattr(torrent, "dl_speed", 0) or 0)
 
         if active == 0:
             return ScreenOutput(
-                line1=fit_line(f"{STOP} TOR IDLE"),
-                line2=fit_line("NO DOWNLOAD"),
+                line1=fit_line("TOR IDLE"),
+                line2=fit_line(f"DOWN {SpeedToken.render(0)}"),
             )
 
-        if torrent.dl_speed and torrent.dl_speed < 100 * 1024:
+        if getattr(torrent, "dl_speed", 0) and torrent.dl_speed < 100 * 1024:
             return ScreenOutput(
                 line1=fit_line("! TOR SLOW"),
-                line2=fit_line(f"{DOWNLOAD} {dl}"),
+                line2=fit_line(f"DOWN {SpeedToken.render(torrent.dl_speed)}"),
             )
 
-        count = f" {active}" if active else ""
         return ScreenOutput(
-            line1=fit_line(f"{PLAY} TOR{count} ACTIVE"),
-            line2=fit_line(f"{DOWNLOAD} {dl}"),
+            line1=fit_line(f"TOR {CountToken.render(active)} ACTIVE"),
+            line2=fit_line(f"DOWN {SpeedToken.render(torrent.dl_speed)}"),
         )

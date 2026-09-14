@@ -1,6 +1,8 @@
 from dx4000_lcd.screens import ScreenOutput
 from dx4000_lcd.renderer import fit_line
-from dx4000_lcd.formatters import format_temp
+from dx4000_lcd.tokens import TemperatureToken, FanToken, PercentToken
+from dx4000_lcd.health import get_hottest_disk
+from dx4000_lcd.layouts import layout_status
 
 
 def _val(obj):
@@ -14,41 +16,24 @@ def _val(obj):
 class StatusScreen:
     def render(self, state) -> ScreenOutput:
         cpu = getattr(state, "cpu", None)
-        cpu_temp_raw = None
-        if cpu is not None:
-            cpu_temp_raw = getattr(cpu, "temp_c", None)
-            if cpu_temp_raw is None:
-                cpu_temp_raw = getattr(cpu, "temp", None)
-        cpu_temp = format_temp(_val(cpu_temp_raw))
+        cpu_temp = _val(getattr(cpu, "temp_c", None)) if cpu else None
+        cpu_temp_str = TemperatureToken.render(cpu_temp)
 
-        disks = getattr(state, "disks", None) or []
-        if disks:
-            hottest = max(
-                disks,
-                key=lambda d: d.temp_c if getattr(d, "temp_c", None) is not None else -1,
-            )
-            disk_temp = format_temp(_val(hottest.temp_c))
-        else:
-            disk_temp = format_temp(None)
+        hottest = get_hottest_disk(state)
+        disk_temp = _val(hottest.temp_c) if hottest else None
+        disk_temp_str = TemperatureToken.render(disk_temp)
 
         fan = getattr(state, "fan", None)
-        rpm = None
-        if fan is not None:
-            rpm = _val(getattr(fan, "rpm", None))
-            if rpm is None:
-                rpm = _val(getattr(fan, "rpm_fan1", None))
-        if rpm is None or rpm == 0:
-            fan_text = "--"
-        elif rpm >= 1000:
-            fan_text = f"{int(rpm) // 1000}K"
-        else:
-            fan_text = str(int(rpm))
+        fan_rpm = _val(getattr(fan, "rpm", None)) if fan else None
+        fan_str = FanToken.render(fan_rpm)
 
         storage = getattr(state, "storage", None)
-        used_pct = _val(getattr(storage, "used_pct", None) if storage is not None else None)
-        pct_text = "--" if used_pct is None else str(round(used_pct))
+        storage_pct = _val(getattr(storage, "used_pct", None)) if storage else None
+        storage_str = PercentToken.render(storage_pct)
+
+        line1, line2 = layout_status(cpu_temp_str, fan_str, disk_temp_str, storage_str)
 
         return ScreenOutput(
-            line1=fit_line(f"CPU {cpu_temp} FAN {fan_text}"),
-            line2=fit_line(f"DSK {disk_temp} STO {pct_text}%"),
+            line1=fit_line(line1),
+            line2=fit_line(line2),
         )

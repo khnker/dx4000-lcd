@@ -1,6 +1,5 @@
 LCD_WIDTH = 16
 
-
 def render_bar(percent: float, width: int = 9) -> str:
     percent = max(0.0, min(100.0, percent))
     pixels = round(percent / 100.0 * width * 5)
@@ -9,8 +8,8 @@ def render_bar(percent: float, width: int = 9) -> str:
         filled = min(5, pixels)
         if filled == 0:
             result.append(" ")
-        elif filled == 5:
-            result.append(chr(4))
+        elif filled >= 4:
+            result.append(chr(3))
         else:
             result.append(chr(filled - 1))
         pixels -= filled

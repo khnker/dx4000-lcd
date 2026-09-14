@@ -1,37 +1,27 @@
 from dx4000_lcd.screens import ScreenOutput
 from dx4000_lcd.renderer import fit_line
-from dx4000_lcd.formatters import format_temp
+from dx4000_lcd.tokens import DiskToken, TemperatureToken, StateToken
+from dx4000_lcd.health import get_hottest_disk
+from dx4000_lcd.layouts import layout_disk
 
 
 class DiskScreen:
     def render(self, state) -> ScreenOutput:
-        disks = getattr(state, "disks", None) or []
-        if not disks:
+        hottest = get_hottest_disk(state)
+
+        if not hottest:
             return ScreenOutput(
                 line1=fit_line("DISK --"),
                 line2=fit_line("NO DATA"),
             )
 
-        disk = max(
-            disks,
-            key=lambda d: d.temp_c if d.temp_c is not None else -1,
-        )
+        disk_name = DiskToken.render(hottest.name)
+        temp = TemperatureToken.render(hottest.temp_c)
+        health_state = StateToken.render(getattr(hottest, "health", None))
 
-        temp = format_temp(disk.temp_c)
-        health = (disk.health or "").upper() if isinstance(disk.health, str) else str(getattr(disk.health, "value", disk.health) or "").upper()
-
-        try:
-            temp_val = int(temp.replace("C", "")) if temp and temp != "--C" else 0
-        except ValueError:
-            temp_val = 0
-
-        if temp_val >= 45:
-            return ScreenOutput(
-                line1=fit_line(f"! {disk.name} HOT"),
-                line2=fit_line(temp),
-            )
+        line1, line2 = layout_disk(disk_name, temp, health_state)
 
         return ScreenOutput(
-            line1=fit_line(f"{disk.name} {temp}"),
-            line2=fit_line(health),
+            line1=fit_line(line1),
+            line2=fit_line(line2),
         )
