@@ -8,8 +8,8 @@ CGRAM_PATTERNS: Dict[str, str] = {
     "BAR4": "30 30 30 30 30 30 30 30",
     "THERMO": "4 4 4 4 14 14 31 14",
     "FAN": "10 4 10 0 0 0 0 0",
-    "ARROW_DOWN": "04040404150E0400",
-    "ARROW_UP": "040E150404040400",
+    "DOWNLOAD": "8 8 8 8 21 21 8 8",
+    "UPLOAD": "8 8 21 21 8 8 8 8",
 }
 
 def load_cgram(lcd):
@@ -20,8 +20,8 @@ def load_cgram(lcd):
         3: "BAR4",
         4: "THERMO",
         5: "FAN",
-        6: "ARROW_DOWN",
-        7: "ARROW_UP",
+        6: "DOWNLOAD",
+        7: "UPLOAD",
     }
     for slot, name in slots.items():
         if name in CGRAM_PATTERNS:

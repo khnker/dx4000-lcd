@@ -1,15 +1,23 @@
-BAR1 = "\x00"
-BAR2 = "\x01"
-BAR3 = "\x02"
-BAR4 = "\x03"
+BAR_25 = chr(0)
+BAR_50 = chr(1)
+BAR_75 = chr(2)
+BAR_100 = chr(3)
 
-THERMO = "\x04"
-FAN = "\x05"
+TEMP = chr(4)
+FAN = chr(5)
+DOWNLOAD = chr(6)
+UPLOAD = chr(7)
 
-# Usar los slots CGRAM 0 y 1 para flechas (UP/DOWN) según el spec o usar los slots dedicados
-ARROW_UP = "\x00"
-ARROW_DOWN = "\x01"
+# Legacy aliases (backwards compatibility)
+BAR1 = BAR_25
+BAR2 = BAR_50
+BAR3 = BAR_75
+BAR4 = BAR_100
+THERMO = TEMP
 
-PLAY = "\x02"
-PAUSE = "\x03"
-STOP = "\x04"
+ARROW_UP = UPLOAD
+ARROW_DOWN = DOWNLOAD
+
+PLAY = chr(2)
+PAUSE = chr(3)
+STOP = chr(4)
