@@ -1,28 +1,14 @@
-from typing import Dict
-
-# Iconos mapeados a slots CGRAM (0-7)
-CGRAM_PATTERNS: Dict[str, str] = {
-    "BAR1": "16 16 16 16 16 16 16 16",
-    "BAR2": "24 24 24 24 24 24 24 24",
-    "BAR3": "28 28 28 28 28 28 28 28",
-    "BAR4": "30 30 30 30 30 30 30 30",
-    "THERMO": "4 4 4 4 14 14 31 14",
-    "FAN": "10 4 10 0 0 0 0 0",
-    "DOWNLOAD": "8 8 8 8 21 21 8 8",
-    "UPLOAD": "8 8 21 21 8 8 8 8",
+CGRAM_GLYPHS = {
+    0: "16 16 16 16 16 16 16 16",     # BAR_25
+    1: "24 24 24 24 24 24 24 24",     # BAR_50
+    2: "28 28 28 28 28 28 28 28",     # BAR_75
+    3: "30 30 30 30 30 30 30 30",     # BAR_100
+    4: "4 4 4 4 14 14 31 14",        # TEMP
+    5: "10 4 10 0 0 0 0 0",          # FAN
+    6: "0 4 14 31 14 4 0 0",         # DOWNLOAD
+    7: "0 4 4 4 14 31 14 0",         # UPLOAD
 }
 
 def load_cgram(lcd):
-    slots = {
-        0: "BAR1",
-        1: "BAR2",
-        2: "BAR3",
-        3: "BAR4",
-        4: "THERMO",
-        5: "FAN",
-        6: "DOWNLOAD",
-        7: "UPLOAD",
-    }
-    for slot, name in slots.items():
-        if name in CGRAM_PATTERNS:
-            lcd.set_char(slot, CGRAM_PATTERNS[name])
+    for slot, rows in CGRAM_GLYPHS.items():
+        lcd.set_char(slot, rows)

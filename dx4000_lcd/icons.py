@@ -1,23 +1,18 @@
-BAR_25 = chr(0)
-BAR_50 = chr(1)
-BAR_75 = chr(2)
-BAR_100 = chr(3)
+# Iconos LCD 16x2 - slots CGRAM 0-7
+BAR_25 = "\x00"
+BAR_50 = "\x01"
+BAR_75 = "\x02"
+BAR_100 = "\x03"
+TEMP = "\x04"
+FAN = "\x05"
+DOWNLOAD = "\x06"
+UPLOAD = "\x07"
 
-TEMP = chr(4)
-FAN = chr(5)
-DOWNLOAD = chr(6)
-UPLOAD = chr(7)
-
-# Legacy aliases (backwards compatibility)
+# Legacy aliases
 BAR1 = BAR_25
 BAR2 = BAR_50
 BAR3 = BAR_75
 BAR4 = BAR_100
 THERMO = TEMP
-
-ARROW_UP = UPLOAD
 ARROW_DOWN = DOWNLOAD
-
-PLAY = chr(2)
-PAUSE = chr(3)
-STOP = chr(4)
+ARROW_UP = UPLOAD

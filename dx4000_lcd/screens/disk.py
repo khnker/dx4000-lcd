@@ -10,15 +10,15 @@ class DiskScreen:
                 line1=fit_line("DISK --"),
                 line2=fit_line("NO DATA"),
             )
-
+        
         disk = max(
             state.disks,
             key=lambda d: d.temp_c if d.temp_c is not None else -1,
         )
-
+        
         temp = format_temp(disk.temp_c)
-
+        
         return ScreenOutput(
-            line1=fit_line(f"{disk.name} {TEMP}{temp}"),
-            line2=fit_line(f"HEALTH {disk.health}"),
+            line1=fit_line(f"DISK {disk.name} {temp}"),
+            line2=fit_line(f"SMART {disk.health}"),
         )
