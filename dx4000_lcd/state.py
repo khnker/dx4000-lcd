@@ -38,6 +38,10 @@ class DiskState:
     temp_c: Optional[int] = None
     health: str = "UNKNOWN"
     smart_status: str = "UNKNOWN"
+    reallocated: int = 0
+    uncorrectable: int = 0
+    command_timeout: int = 0
+    power_on_hours: int = 0
 
 @dataclass
 class StorageState:

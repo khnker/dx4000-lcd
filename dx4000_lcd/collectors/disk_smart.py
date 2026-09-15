@@ -1,5 +1,6 @@
 # DiskSmartCollector - reads SMART data using JSON output
 import logging
+import re
 from dx4000_lcd.state import SystemState, DiskState
 from dx4000_lcd.hardware import discover_disks
 import subprocess
@@ -27,20 +28,39 @@ class DiskSmartCollector:
 
             data = json.loads(res.stdout)
             
-            # Get temperature from SMART attribute 194 or Temperature_Celsius
-            # Use raw value (first number in the raw string), not normalized value
+            # Initialize SMART health indicators
             temp = None
+            reallocated = 0
+            uncorrectable = 0
+            command_timeout = 0
+            power_on_hours = 0
+            
             attrs = data.get("ata_smart_attributes", {}).get("table", [])
             for attr in attrs:
-                if attr.get("id") == 194 or "Temperature" in str(attr.get("name", "")):
-                    raw = attr.get("raw", {})
-                    raw_str = raw.get("string", "")
-                    if raw_str:
-                        import re
-                        match = re.match(r"(\d+)", raw_str)
-                        if match:
-                            temp = int(match.group(1))
-                    break
+                attr_id = attr.get("id")
+                raw = attr.get("raw", {})
+                raw_str = raw.get("string", "")
+                raw_val = 0
+                if raw_str:
+                    match = re.match(r"(\d+)", raw_str)
+                    if match:
+                        raw_val = int(match.group(1))
+                
+                # Temperature (attribute 194)
+                if attr_id == 194 or "Temperature" in str(attr.get("name", "")):
+                    temp = raw_val
+                # Reallocated sectors (attribute 5)
+                elif attr_id == 5:
+                    reallocated = raw_val
+                # Uncorrectable errors (attribute 187)
+                elif attr_id == 187:
+                    uncorrectable = raw_val
+                # Command timeout (attribute 188)
+                elif attr_id == 188:
+                    command_timeout = raw_val
+                # Power-on hours (attribute 9)
+                elif attr_id == 9:
+                    power_on_hours = raw_val
 
             # Get health status
             overall = data.get("smart_status", {}).get("passed", None)
@@ -51,7 +71,21 @@ class DiskSmartCollector:
             else:
                 health = "UNKNOWN"
 
-            return DiskState(name=name, temp_c=temp, health=health)
+            # Downgrade health if critical SMART attributes are bad
+            if uncorrectable > 0 or command_timeout > 100:
+                health = "CRITICAL"
+            elif reallocated > 0 or power_on_hours > 52560:
+                health = "DEGRADED" if health == "OK" else health
+
+            return DiskState(
+                name=name,
+                temp_c=temp,
+                health=health,
+                reallocated=reallocated,
+                uncorrectable=uncorrectable,
+                command_timeout=command_timeout,
+                power_on_hours=power_on_hours
+            )
 
         except subprocess.TimeoutExpired:
             return DiskState(name=name, temp_c=None, health="TIMEOUT")

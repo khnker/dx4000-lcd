@@ -32,6 +32,14 @@ class HealthEngine:
                 results.append(HealthResult(Health.ERROR, "disk", f"{disk.name} HOT"))
             elif disk.temp_c >= 45:
                 results.append(HealthResult(Health.WARN, "disk", f"{disk.name} WARM"))
+            
+            # Check SMART health indicators
+            if disk.uncorrectable > 0:
+                results.append(HealthResult(Health.ERROR, "disk", f"{disk.name} UNCORRECTABLE"))
+            if disk.command_timeout > 100:
+                results.append(HealthResult(Health.WARN, "disk", f"{disk.name} TIMEOUTS"))
+            if disk.reallocated > 0:
+                results.append(HealthResult(Health.WARN, "disk", f"{disk.name} REALLOCATED"))
         
         fan = getattr(state, "fan", None)
         if fan:
